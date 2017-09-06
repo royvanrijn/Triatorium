@@ -10,14 +10,14 @@ public class Triangle {
 
     private final List<Integer> tokens = new ArrayList<>();
 
-    private final int coordinate;
+    private final int locationHash;
 
     private boolean exploded = false;
 
     private List<Integer> neighbourKeys;
 
-    public Triangle(int startSquare, List<Integer> neighbourKeys, int coordinate) {
-        this.coordinate = coordinate;
+    public Triangle(int startSquare, List<Integer> neighbourKeys, int locationHash) {
+        this.locationHash = locationHash;
         this.startPosition = startSquare;
         this.neighbourKeys = Collections.unmodifiableList(new ArrayList<>(neighbourKeys));
     }
@@ -52,8 +52,8 @@ public class Triangle {
         tokens.clear();
     }
 
-    public int getCoordinate() {
-        return coordinate;
+    public int getLocationHash() {
+        return locationHash;
     }
 
     @Override

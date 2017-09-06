@@ -1,6 +1,7 @@
 package com.royvanrijn.triatorium.board;
 
-import com.royvanrijn.triatorium.Move;
+import com.royvanrijn.triatorium.ExplosionMove;
+import com.royvanrijn.triatorium.PlacementMove;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -98,49 +99,50 @@ public class Board {
         return -1;
     }
 
-    public void apply(int playerId, Move move) {
+    public void applyPlacement(int playerId, PlacementMove move) {
+        if (!pendingExplosions.isEmpty()) {
+            throw new IllegalArgumentException("There are pending explosions, resolve these first!");
+        }
 
         Triangle triangle = boardTriangles.get(move.getLocationHash());
-        if(triangle.getTokens().size() < 3) {
-            if(!pendingExplosions.isEmpty()) {
-                throw new IllegalArgumentException("There are pending explosions, resolve these first!");
+
+        // Placement:
+        triangle.addToken(playerId);
+
+        // If we make three, add explosion to stack:
+        if (triangle.getTokens().size() == 3) {
+            pendingExplosions.add(triangle);
+        }
+    }
+
+    public void applyExplosion(int playerId, final ExplosionMove move) {
+
+        // Get first explosion that needs to be resolved:
+        final Triangle toExplode = pendingExplosions.get(0);
+
+        // Check this explosion is the correct triangle:
+        if(move.getLocationHash() != toExplode.getLocationHash()) {
+            throw new IllegalArgumentException("Wrong triangle to explode, incorrect ordering?");
+        }
+
+        //Remove and explode:
+        pendingExplosions.remove(0);
+        toExplode.explode();
+
+        for(int ptr = 0; ptr < move.getNeighboursToReceive().size(); ptr++) {
+            Triangle neighbour = boardTriangles.get(move.getNeighboursToReceive().get(ptr));
+
+            // Sanity check:
+            if(neighbour.getTokens().size() == 3) {
+                throw new IllegalArgumentException("Should never happen....");
+            }
+            neighbour.addToken(move.getTokenDistribution().get(ptr));
+
+            // Might cause another explosion:
+            if(neighbour.getTokens().size() == 3) {
+                pendingExplosions.add(neighbour);
             }
 
-            // Placement:
-            triangle.addToken(playerId);
-
-            // If we make three, add explosion to stack:
-            if(triangle.getTokens().size() == 3) {
-                pendingExplosions.add(triangle);
-            }
-
-        } else {
-
-            // Get first explosion that needs to be resolved:
-            final Triangle toExplode = pendingExplosions.get(0);
-
-            // Check this explosion is the correct triangle:
-            if(!triangle.equals(toExplode)) {
-                throw new IllegalArgumentException("Wrong triangle to explode, incorrect ordering?");
-            }
-
-            //Remove and explode:
-            pendingExplosions.remove(0);
-            triangle.explode();
-
-            for(int ptr = 0; ptr < move.getNeighboursToReceive().size(); ptr++) {
-                Triangle neighbour = boardTriangles.get(move.getNeighboursToReceive().get(ptr));
-                if(neighbour.getTokens().size() == 3) {
-                    throw new IllegalArgumentException("Should never happen!? Placing third!");
-                }
-                neighbour.addToken(move.getTokenDistribution().get(ptr));
-
-                // Might cause another explosion:
-                if(neighbour.getTokens().size() == 3) {
-                    pendingExplosions.add(neighbour);
-                }
-
-            }
         }
     }
 
@@ -153,8 +155,8 @@ public class Board {
     }
 
 
-    public List<Move> generateAllExplosionMoves(final Triangle explodingTriangle) {
-        List<Move> moves = new ArrayList<>();
+    public List<ExplosionMove> generateAllExplosionMoves(final Triangle explodingTriangle) {
+        List<ExplosionMove> moves = new ArrayList<>();
 
         List<Integer> tokens = explodingTriangle.getTokens();
 
@@ -165,20 +167,19 @@ public class Board {
                 neighboursToPlace.add(hash);
             }
         }
-        moves.addAll(generateExplosionMovesForTriangle(explodingTriangle.getCoordinate(), neighboursToPlace, tokens));
+        moves.addAll(generateExplosionMovesForTriangle(explodingTriangle.getLocationHash(), neighboursToPlace, tokens));
 
         return moves;
     }
 
-    private List<Move> generateExplosionMovesForTriangle(final int hash, final List<Integer> neighboursToPlace, final List<Integer> tokens) {
+    private List<ExplosionMove> generateExplosionMovesForTriangle(final int locationHash, final List<Integer> neighboursToPlace, final List<Integer> tokens) {
         int[] colorCount = new int[PLAYER_AMOUNT];
         for(int i:tokens) {
             colorCount[i]++;
         }
         // Last placed token is owner of the explosion (and may decide the fate):
-        int owner = tokens.get(tokens.size()-1);
-        List<Move> moves = new ArrayList<>();
-        recExplosionMoves(moves, hash, owner, neighboursToPlace, colorCount, new ArrayList());
+        List<ExplosionMove> moves = new ArrayList<>();
+        recExplosionMoves(moves, locationHash, neighboursToPlace, colorCount, new ArrayList());
 
         return moves;
     }
@@ -187,23 +188,22 @@ public class Board {
      * Recursive method to generate all the possible ways to explode.
      *
      * @param generatedMoves
-     * @param hash
-     * @param owner
+     * @param locationHash
      * @param neighboursToPlace
      * @param tokensLeft
      * @param tokens
      */
-    private void recExplosionMoves(List<Move> generatedMoves, int hash, int owner, final List<Integer> neighboursToPlace, int[] tokensLeft, List<Integer>
+    private void recExplosionMoves(List<ExplosionMove> generatedMoves, int locationHash, final List<Integer> neighboursToPlace, int[] tokensLeft, List<Integer>
             tokens) {
         if(tokens.size() == neighboursToPlace.size()) {
-            Move move = new Move(hash, owner, new ArrayList<>(tokens), new ArrayList<>(neighboursToPlace));
+            ExplosionMove move = new ExplosionMove(locationHash, new ArrayList<>(tokens), new ArrayList<>(neighboursToPlace));
             generatedMoves.add(move);
         } else {
             for(int tokenColor = 0; tokenColor < tokensLeft.length; tokenColor++) {
                 if(tokensLeft[tokenColor] > 0) {
                     tokensLeft[tokenColor]--;
                     tokens.add(tokenColor);
-                    recExplosionMoves(generatedMoves, hash, owner, neighboursToPlace, tokensLeft, tokens);
+                    recExplosionMoves(generatedMoves, locationHash, neighboursToPlace, tokensLeft, tokens);
                     tokens.remove(tokens.size() - 1);
                     tokensLeft[tokenColor]++;
                 }
@@ -211,7 +211,7 @@ public class Board {
         }
     }
 
-    public List<Move> generatePlacementMoves(int forPlayer) {
+    public List<PlacementMove> generatePlacementMoves(int forPlayer) {
         Set<Integer> toPlace = new HashSet<>();
         for(Map.Entry<Integer, Triangle> boardEntry : boardTriangles.entrySet()) {
             Triangle triangle = boardEntry.getValue();
@@ -235,9 +235,9 @@ public class Board {
             }
         }
 
-        List<Move> moves = new ArrayList<>();
+        List<PlacementMove> moves = new ArrayList<>();
         for(Integer hash:toPlace) {
-            moves.add(new Move(hash));
+            moves.add(new PlacementMove(hash));
         }
         return moves;
     }

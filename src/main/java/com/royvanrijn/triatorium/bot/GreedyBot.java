@@ -1,11 +1,12 @@
 package com.royvanrijn.triatorium.bot;
 
-import com.royvanrijn.triatorium.Move;
-import com.royvanrijn.triatorium.board.Board;
-import com.royvanrijn.triatorium.board.Triangle;
-
 import java.util.Collections;
 import java.util.List;
+
+import com.royvanrijn.triatorium.ExplosionMove;
+import com.royvanrijn.triatorium.PlacementMove;
+import com.royvanrijn.triatorium.board.Board;
+import com.royvanrijn.triatorium.board.Triangle;
 
 /**
  * Always try to explode the opponent, placement is random
@@ -24,9 +25,9 @@ public class GreedyBot implements TriatoriumBot {
     }
 
     @Override
-    public Move evaluateExplosion(final Board board, final Triangle triangle) {
+    public ExplosionMove evaluateExplosion(final Board board, final Triangle triangle) {
 
-        List<Move> possibleExplosionMoves = board.generateAllExplosionMoves(triangle);
+        List<ExplosionMove> possibleExplosionMoves = board.generateAllExplosionMoves(triangle);
 
         // Shuffle:
         Collections.shuffle(possibleExplosionMoves);
@@ -41,8 +42,8 @@ public class GreedyBot implements TriatoriumBot {
     }
 
     @Override
-    public Move pickMove(final Board board) {
-        List<Move> placementMoves = board.generatePlacementMoves(myId);
+    public PlacementMove pickMove(final Board board) {
+        List<PlacementMove> placementMoves = board.generatePlacementMoves(myId);
         if(placementMoves.size() == 0) {
             return null;
         }

@@ -1,6 +1,7 @@
 package com.royvanrijn.triatorium.bot;
 
-import com.royvanrijn.triatorium.Move;
+import com.royvanrijn.triatorium.ExplosionMove;
+import com.royvanrijn.triatorium.PlacementMove;
 import com.royvanrijn.triatorium.board.Board;
 import com.royvanrijn.triatorium.board.Triangle;
 
@@ -8,7 +9,7 @@ public interface TriatoriumBot {
 
     String getName();
 
-    Move pickMove(Board board);
+    PlacementMove pickMove(Board board);
 
-    Move evaluateExplosion(Board board, Triangle triangle);
+    ExplosionMove evaluateExplosion(Board board, Triangle triangle);
 }

@@ -38,14 +38,14 @@ public class Triatorium {
             final TriatoriumBot bot = bots[currentPlayer];
 
             // Bot gets to pick a move using the board:
-            Move placementMove = bot.pickMove(board);
+            PlacementMove placementMove = bot.pickMove(board);
 
             if(placementMove == null) {
                 throw new IllegalArgumentException("Player didn't return move while board says it is possible.");
             }
 
             // Apply the move to the board:
-            board.apply(currentPlayer, placementMove);
+            board.applyPlacement(currentPlayer, placementMove);
 
             // While there are pending explosions, handle these:
             while(board.hasPendingExplosions()) {
@@ -56,9 +56,9 @@ public class Triatorium {
                  int playerToDistribute = triangle.getTokens().get(2);
 
                  final TriatoriumBot explosionBot = bots[playerToDistribute];
-                 Move move = explosionBot.evaluateExplosion(board, triangle);
+                 ExplosionMove move = explosionBot.evaluateExplosion(board, triangle);
 
-                 board.apply(playerToDistribute, move);
+                 board.applyExplosion(playerToDistribute, move);
              }
 
             // Next player:

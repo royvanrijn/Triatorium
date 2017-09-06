@@ -1,6 +1,7 @@
 package com.royvanrijn.triatorium.bot;
 
-import com.royvanrijn.triatorium.Move;
+import com.royvanrijn.triatorium.ExplosionMove;
+import com.royvanrijn.triatorium.PlacementMove;
 import com.royvanrijn.triatorium.board.Board;
 import com.royvanrijn.triatorium.board.CoordinateHash;
 import com.royvanrijn.triatorium.board.Triangle;
@@ -28,9 +29,9 @@ public class SmartBot implements TriatoriumBot {
     }
 
     @Override
-    public Move evaluateExplosion(final Board board, final Triangle triangle) {
+    public ExplosionMove evaluateExplosion(final Board board, final Triangle triangle) {
 
-        List<Move> possibleExplosionMoves = board.generateAllExplosionMoves(triangle);
+        List<ExplosionMove> possibleExplosionMoves = board.generateAllExplosionMoves(triangle);
 
         // Shuffle:
         Collections.shuffle(possibleExplosionMoves);
@@ -45,8 +46,8 @@ public class SmartBot implements TriatoriumBot {
     }
 
     @Override
-    public Move pickMove(final Board board) {
-        List<Move> placementMoves = board.generatePlacementMoves(myId);
+    public PlacementMove pickMove(final Board board) {
+        List<PlacementMove> placementMoves = board.generatePlacementMoves(myId);
         if(placementMoves.size() == 0) {
             return null;
         }
@@ -67,8 +68,8 @@ public class SmartBot implements TriatoriumBot {
                     }
 
                     // If the score is equal, pick the one closest to the center:
-                    int x1 = CoordinateHash.getX(t1.getCoordinate());
-                    int x2 = CoordinateHash.getX(t2.getCoordinate());
+                    int x1 = CoordinateHash.getX(t1.getLocationHash());
+                    int x2 = CoordinateHash.getX(t2.getLocationHash());
 
                     return myId == 1 ? (x1 - x2) : -(x1 - x2);
                 }
