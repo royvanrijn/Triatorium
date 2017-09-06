@@ -3,7 +3,6 @@ package com.royvanrijn.triatorium.bot.genetic;
 import com.royvanrijn.triatorium.Triatorium;
 import com.royvanrijn.triatorium.board.Board;
 import com.royvanrijn.triatorium.bot.SmartBot;
-import com.royvanrijn.triatorium.bot.TriatoriumBot;
 
 import java.util.Arrays;
 import java.util.Random;
@@ -24,9 +23,9 @@ public class SimpleHillClimbOptimizer {
         // Make board:
         Board board = new Board();
 
-        WeightedBot[] bots = new WeightedBot[2];
-        bots[0] = new WeightedBot();
-        bots[1] = new WeightedBot();
+        WeightedWithLocationBot[] bots = new WeightedWithLocationBot[2];
+        bots[0] = new WeightedWithLocationBot();
+        bots[1] = new WeightedWithLocationBot();
 
         makeRandom(bots[0]);
         makeRandom(bots[1]);
@@ -38,8 +37,8 @@ public class SimpleHillClimbOptimizer {
 
             // Evaluate the bots:
             long balance = 0;
-            for(int i = 0; i < 100; i++) {
-                triatorium.playGameWithBots(board, bots, i%2);
+            for(int i = 0; i < 10; i++) {
+                triatorium.playGameWithBots(board, i%2, bots);
 
                 int[] scores = board.calculateScore();
 
@@ -55,16 +54,17 @@ public class SimpleHillClimbOptimizer {
                 survivor = 1;
             }
 
-            WeightedBot winningBot = bots[survivor];
-            WeightedBot losingBot = bots[1 - survivor];
+            WeightedWithLocationBot winningBot = bots[survivor];
+            WeightedWithLocationBot losingBot = bots[1 - survivor];
 
             System.out.println(balance + " winner is: "+survivor );
 
-            if(round % 10 == 0) {
+            if(round % 100 == 0) {
                 testBot(board, triatorium, winningBot);
 
                 System.out.println(Arrays.toString(bots[survivor].getExplosionWeights()));
                 System.out.println(Arrays.toString(bots[survivor].getPlacementWeights()));
+                System.out.println(Arrays.toString(bots[survivor].getLocationWeights()));
             }
 
             // Incremental change loser:
@@ -78,12 +78,10 @@ public class SimpleHillClimbOptimizer {
 
     }
 
-    private void testBot(final Board board, final Triatorium triatorium, final WeightedBot winningBot) {
-        // Pit against known smart bot:
-        TriatoriumBot[] testBots = new TriatoriumBot[2];
-        testBots[0] = new SmartBot();
-        testBots[1] = winningBot;
+    private SmartBot smartBot = new SmartBot();
 
+    private void testBot(final Board board, final Triatorium triatorium, final WeightedWithLocationBot winningBot) {
+        // Pit against known smart bot:
         long w1 = 0;
         long w2 = 0;
         long t = 0;
@@ -92,7 +90,7 @@ public class SimpleHillClimbOptimizer {
 
         for(int i = 0; i< 100; i++) {
             board.reset();
-            triatorium.playGameWithBots(board, testBots, i%2);
+            triatorium.playGameWithBots(board, i%2, winningBot, smartBot);
             int[] scores = board.calculateScore();
 
             p1 += scores[0];
@@ -111,31 +109,43 @@ public class SimpleHillClimbOptimizer {
         System.out.println(p1+" : "+p2+" | "+w1+" : "+w2 + " : "+t + " ("+(w1+w2+t)+")");
     }
 
-    private void copyWeights(final WeightedBot from, final WeightedBot to) {
+    private void copyWeights(final WeightedWithLocationBot from, final WeightedWithLocationBot to) {
         for(int i = 0; i < to.getExplosionWeights().length; i++) {
             to.getExplosionWeights()[i] = from.getExplosionWeights()[i];
         }
         for(int i = 0; i < to.getPlacementWeights().length; i++) {
             to.getPlacementWeights()[i] = from.getPlacementWeights()[i];
         }
+        for(int i = 0; i < to.getLocationWeights().length; i++) {
+            to.getLocationWeights()[i] = from.getLocationWeights()[i];
+        }
     }
 
     private final Random random = new Random();
 
-    private void makeRandom(WeightedBot bot) {
+    private void makeRandom(WeightedWithLocationBot bot) {
         for(int i = 0; i < bot.getExplosionWeights().length; i++) {
             bot.getExplosionWeights()[i] = random.nextDouble();
         }
         for(int i = 0; i < bot.getPlacementWeights().length; i++) {
             bot.getPlacementWeights()[i] = random.nextDouble();
         }
+        for(int i = 0; i < bot.getLocationWeights().length; i++) {
+            bot.getLocationWeights()[i] = random.nextDouble();
+        }
     }
 
-    private void updateRandomField(final WeightedBot losingBot) {
-        if(random.nextBoolean()) {
-            losingBot.getExplosionWeights()[random.nextInt(losingBot.getExplosionWeights().length)] = random.nextDouble();
-        } else {
-            losingBot.getPlacementWeights()[random.nextInt(losingBot.getPlacementWeights().length)] = random.nextDouble();
+    private void updateRandomField(final WeightedWithLocationBot losingBot) {
+        switch(random.nextInt(3)) {
+            case 0:
+                losingBot.getExplosionWeights()[random.nextInt(losingBot.getExplosionWeights().length)] = random.nextDouble();
+                return;
+            case 1:
+                losingBot.getPlacementWeights()[random.nextInt(losingBot.getPlacementWeights().length)] = random.nextDouble();
+                return;
+            case 2:
+                losingBot.getLocationWeights()[random.nextInt(losingBot.getLocationWeights().length)] = random.nextDouble();
+            return;
         }
     }
 

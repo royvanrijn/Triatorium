@@ -111,7 +111,7 @@ public class Board {
 
         // If we make three, add explosion to stack:
         if (triangle.getTokens().size() == 3) {
-            pendingExplosions.add(triangle);
+            addExplosionToStack(triangle);
         }
     }
 
@@ -140,9 +140,25 @@ public class Board {
 
             // Might cause another explosion:
             if(neighbour.getTokens().size() == 3) {
-                pendingExplosions.add(neighbour);
+                addExplosionToStack(neighbour);
             }
 
+        }
+    }
+
+    private void addExplosionToStack(Triangle triangle) {
+        int canPlace = 0;
+        for(Integer neighbour:triangle.getNeighbourKeys()) {
+            Triangle neighbouringTriangle = boardTriangles.get(neighbour);
+            if(!neighbouringTriangle.isExploded() && neighbouringTriangle.getTokens().size() < 3) {
+                canPlace++;
+            }
+        }
+        // Nowhere to place tokens? Automate the explosion, no need to ask a bot.
+        if(canPlace == 0) {
+            triangle.explode();
+        } else {
+            pendingExplosions.add(triangle);
         }
     }
 

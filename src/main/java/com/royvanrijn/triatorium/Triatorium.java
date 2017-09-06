@@ -4,15 +4,29 @@ import com.royvanrijn.triatorium.board.Board;
 import com.royvanrijn.triatorium.board.Triangle;
 import com.royvanrijn.triatorium.bot.TriatoriumBot;
 
+import static com.royvanrijn.triatorium.Printer.printBoard;
+
 public class Triatorium {
 
-    public void playGameWithBots(Board board, TriatoriumBot[] bots, int startWith) {
+    public static boolean DEBUG = false;
+
+    public Triatorium() {
+
+    }
+
+    public Triatorium(boolean debug) {
+        DEBUG = debug;
+    }
+
+    public void playGameWithBots(Board board, int startWith, TriatoriumBot... bots) {
 
         int currentPlayer = startWith;
 
         while(board.generatePlacementMoves(currentPlayer).size() > 0) {
 
-            //printBoard(board);
+            if(DEBUG) {
+                printBoard(board);
+            }
 
             final TriatoriumBot bot = bots[currentPlayer];
 

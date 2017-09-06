@@ -19,23 +19,28 @@ import java.util.stream.Collectors;
  *
  * In case of explosion, favor a (shuffled/random) distribution where we have the most tokens.
  */
-public class WeightedBot implements TriatoriumBot {
+public class WeightedWithLocationBot implements TriatoriumBot {
 
     private double[] explosionWeights = new double[10 * 3];
     private double[] placementWeights = new double[6 * 4];
+    private double[] locationWeights = new double[Board.SHAPE_EDGE.length * Board.MAX_WIDTH];
 
-    public WeightedBot() {
+    public WeightedWithLocationBot() {
     }
 
-    public WeightedBot(String inputExplosion, String inputPlacement) {
+    public WeightedWithLocationBot(String inputExplosion, String inputPlacement, String inputLocation) {
 
         Double[] ed = Arrays.stream(inputExplosion.replace("[","").replace("]","").split(", ")).map(s -> Double.parseDouble(s)).collect(Collectors.toList()).toArray(new Double[0]);
-        Double[] pd = Arrays.stream(inputPlacement.replace("[","").replace("]","").split(", ")).map(s -> Double.parseDouble(s)).collect(Collectors.toList()).toArray(new Double[0]);
         for(int i = 0; i< explosionWeights.length; i++) {
             explosionWeights[i] = ed[i];
         }
+        Double[] pd = Arrays.stream(inputPlacement.replace("[","").replace("]","").split(", ")).map(s -> Double.parseDouble(s)).collect(Collectors.toList()).toArray(new Double[0]);
         for(int i = 0; i< placementWeights.length; i++) {
             placementWeights[i] = pd[i];
+        }
+        Double[] ld = Arrays.stream(inputLocation.replace("[","").replace("]","").split(", ")).map(s -> Double.parseDouble(s)).collect(Collectors.toList()).toArray(new Double[0]);
+        for(int i = 0; i< locationWeights.length; i++) {
+            locationWeights[i] = ld[i];
         }
     }
 
@@ -45,6 +50,10 @@ public class WeightedBot implements TriatoriumBot {
 
     public double[] getPlacementWeights() {
         return placementWeights;
+    }
+
+    public double[] getLocationWeights() {
+        return locationWeights;
     }
 
     @Override
@@ -127,6 +136,8 @@ public class WeightedBot implements TriatoriumBot {
             score += placementWeights[offset + tokensAsId(myId, board.get(neightbour).getTokens())];
             offset += 6;
         }
+
+        score += locationWeights[hashToId(triangle.getLocationHash())];
         return score;
     }
 
@@ -146,7 +157,13 @@ public class WeightedBot implements TriatoriumBot {
 
             offset += 10;
         }
+
+        score += locationWeights[hashToId(move.getLocationHash())];
         return score;
+    }
+
+    private int hashToId(int locationHash) {
+        return (CoordinateHash.getX(locationHash) * Board.MAX_WIDTH) + CoordinateHash.getY(locationHash);
     }
 
 
