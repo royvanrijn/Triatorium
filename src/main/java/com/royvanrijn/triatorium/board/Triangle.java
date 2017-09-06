@@ -6,7 +6,7 @@ import java.util.List;
 
 public class Triangle {
 
-    private final int startPosition;
+    private final int startPositionForPlayer;
 
     private final List<Integer> tokens = new ArrayList<>();
 
@@ -16,18 +16,14 @@ public class Triangle {
 
     private List<Integer> neighbourKeys;
 
-    public Triangle(int startSquare, List<Integer> neighbourKeys, int locationHash) {
+    public Triangle(int startPositionForPlayer, List<Integer> neighbourKeys, int locationHash) {
         this.locationHash = locationHash;
-        this.startPosition = startSquare;
+        this.startPositionForPlayer = startPositionForPlayer;
         this.neighbourKeys = Collections.unmodifiableList(new ArrayList<>(neighbourKeys));
     }
 
     public boolean isExploded() {
         return exploded;
-    }
-
-    public int getStartSquare() {
-        return startPosition;
     }
 
     public List<Integer> getTokens() {
@@ -58,6 +54,10 @@ public class Triangle {
 
     @Override
     public String toString() {
-        return "[" + tokens + " s:" + startPosition + " e:" + (exploded?"y": "n") + "]";
+        return "[" + tokens + " s:" + startPositionForPlayer + " e:" + (exploded?"y": "n") + "]";
+    }
+
+    public boolean isStartSquare(final int forPlayer) {
+        return startPositionForPlayer == forPlayer;
     }
 }

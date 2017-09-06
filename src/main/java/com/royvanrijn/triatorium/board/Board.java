@@ -46,14 +46,14 @@ public class Board {
             Integer coordinate = toVisit.iterator().next();
             toVisit.remove(coordinate);
 
-            int startPosition = -1;
+            int startPositionForPlayer = -1;
             if(startP1.contains(coordinate)) {
-                startPosition = 0;
+                startPositionForPlayer = 0;
             } else if(startP2.contains(coordinate)) {
-                startPosition = 1;
+                startPositionForPlayer = 1;
             }
             List<Integer> neighbourKeys = calculateNeighbours(coordinate);
-            boardTriangles.put(coordinate, new Triangle(startPosition, neighbourKeys, coordinate));
+            boardTriangles.put(coordinate, new Triangle(startPositionForPlayer, neighbourKeys, coordinate));
 
             neighbourKeys.removeAll(boardTriangles.keySet());
             toVisit.addAll(neighbourKeys);
@@ -173,13 +173,13 @@ public class Board {
     }
 
     private List<ExplosionMove> generateExplosionMovesForTriangle(final int locationHash, final List<Integer> neighboursToPlace, final List<Integer> tokens) {
-        int[] colorCount = new int[PLAYER_AMOUNT];
-        for(int i:tokens) {
-            colorCount[i]++;
+        int[] tokenCount = new int[PLAYER_AMOUNT];
+        for(int tokenFromPlayer:tokens) {
+            tokenCount[tokenFromPlayer]++;
         }
         // Last placed token is owner of the explosion (and may decide the fate):
         List<ExplosionMove> moves = new ArrayList<>();
-        recExplosionMoves(moves, locationHash, neighboursToPlace, colorCount, new ArrayList());
+        recExplosionMoves(moves, locationHash, neighboursToPlace, tokenCount, new ArrayList());
 
         return moves;
     }
@@ -190,22 +190,25 @@ public class Board {
      * @param generatedMoves
      * @param locationHash
      * @param neighboursToPlace
-     * @param tokensLeft
+     * @param tokenCount
      * @param tokens
      */
-    private void recExplosionMoves(List<ExplosionMove> generatedMoves, int locationHash, final List<Integer> neighboursToPlace, int[] tokensLeft, List<Integer>
+    private void recExplosionMoves(List<ExplosionMove> generatedMoves, int locationHash, final List<Integer> neighboursToPlace, int[] tokenCount, List<Integer>
             tokens) {
         if(tokens.size() == neighboursToPlace.size()) {
             ExplosionMove move = new ExplosionMove(locationHash, new ArrayList<>(tokens), new ArrayList<>(neighboursToPlace));
             generatedMoves.add(move);
         } else {
-            for(int tokenColor = 0; tokenColor < tokensLeft.length; tokenColor++) {
-                if(tokensLeft[tokenColor] > 0) {
-                    tokensLeft[tokenColor]--;
-                    tokens.add(tokenColor);
-                    recExplosionMoves(generatedMoves, locationHash, neighboursToPlace, tokensLeft, tokens);
+            // For each token left to place, add it, call recursively deeper:
+            for(int player = 0; player < tokenCount.length; player++) {
+                // If this player has tokens left to place:
+                if(tokenCount[player] > 0) {
+                    // Add this token and recurse:
+                    tokenCount[player]--;
+                    tokens.add(player);
+                    recExplosionMoves(generatedMoves, locationHash, neighboursToPlace, tokenCount, tokens);
                     tokens.remove(tokens.size() - 1);
-                    tokensLeft[tokenColor]++;
+                    tokenCount[player]++;
                 }
             }
         }
@@ -218,7 +221,7 @@ public class Board {
 
             if(!triangle.isExploded() && triangle.getTokens().size() < 3) {
                 // Can add to current square:
-                if(triangle.getStartSquare() == forPlayer) {
+                if(triangle.isStartSquare(forPlayer)) {
                     // Can add because this is our start triangle:
                     toPlace.add(boardEntry.getKey());
                 } else if(triangle.getTokens().contains(forPlayer) && triangle.getTokens().size() < 3) {
