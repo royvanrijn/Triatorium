@@ -17,19 +17,13 @@ import java.util.List;
  */
 public class SmartBot implements TriatoriumBot {
 
-    private final int myId;
-
-    public SmartBot(int id) {
-        this.myId = id;
-    }
-
     @Override
     public String getName() {
         return "SmartBot";
     }
 
     @Override
-    public ExplosionMove evaluateExplosion(final Board board, final Triangle triangle) {
+    public ExplosionMove evaluateExplosion(final int myId, final Board board, final Triangle triangle) {
 
         List<ExplosionMove> possibleExplosionMoves = board.generateAllExplosionMoves(triangle);
 
@@ -46,7 +40,7 @@ public class SmartBot implements TriatoriumBot {
     }
 
     @Override
-    public PlacementMove pickMove(final Board board) {
+    public PlacementMove pickMove(final int myId, final Board board) {
         List<PlacementMove> placementMoves = board.generatePlacementMoves(myId);
         if(placementMoves.size() == 0) {
             return null;
@@ -60,8 +54,8 @@ public class SmartBot implements TriatoriumBot {
                     final Triangle t1 = board.get(o1.getLocationHash());
                     final Triangle t2 = board.get(o2.getLocationHash());
 
-                    int s1 = scoreForTriangle(t1);
-                    int s2 = scoreForTriangle(t2);
+                    int s1 = scoreForTriangle(myId, t1);
+                    int s2 = scoreForTriangle(myId, t2);
 
                     if(s1 != s2) {
                         return s2 - s1;
@@ -78,9 +72,9 @@ public class SmartBot implements TriatoriumBot {
         return placementMoves.get(0);
     }
 
-    private int scoreForTriangle(Triangle t) {
-        int opponents = (int) t.getTokens().stream().filter(o -> o != myId).count();
-        int ours = t.getTokens().size() - opponents;
+    private int scoreForTriangle(final int myId, final Triangle triangle) {
+        int opponents = (int) triangle.getTokens().stream().filter(o -> o != myId).count();
+        int ours = triangle.getTokens().size() - opponents;
 
         String id = "" + opponents + "" + ours;
         switch(id) {

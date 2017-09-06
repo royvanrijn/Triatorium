@@ -1,10 +1,11 @@
-package com.royvanrijn.triatorium.bot;
+package com.royvanrijn.triatorium.bot.genetic;
 
 import com.royvanrijn.triatorium.ExplosionMove;
 import com.royvanrijn.triatorium.PlacementMove;
 import com.royvanrijn.triatorium.board.Board;
 import com.royvanrijn.triatorium.board.CoordinateHash;
 import com.royvanrijn.triatorium.board.Triangle;
+import com.royvanrijn.triatorium.bot.TriatoriumBot;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,17 +25,13 @@ public class WeightedBot implements TriatoriumBot {
     //[0.15828277001154512, 0.023251539708203817, 0.12718029256505325, 0.2877200225690357, 0.8141642153805726, 0.9513425324173803, 0.8038578961733532, 0.5024314543238512, 0.03975031465024115, 0.3987288314662669, 0.8534603219530744, 0.429629982290337, 0.04363659971138334, 0.856351337511634, 0.7229754991230302, 0.5161952559061361, 0.7284537423276524, 0.24273873478862862, 0.6564896149378308, 0.8957721534961292, 0.5659449873286422, 0.003880367808674845, 0.15703024361471696, 0.6463996334195571]
     //[0.92442458950426, 0.6443468764092356, 0.7481876825514686, 0.3566717090540469, 9.145757879007732E-4, 0.33067157982419537, 0.14497147477473515, 0.8879987840131557, 0.6667470832812646, 0.23313551950183653, 0.4569923046861344, 0.8494092297587272, 0.5984601989857661, 0.30878281253603557, 0.019134681734079617, 0.7586272250559021, 0.16705784828345493, 0.23911429705650833, 0.6643609242251685, 0.34647269384746504, 0.4617419124560179, 0.7012647048149284, 0.9127600524427691, 0.9206362597707268, 0.08377851309762263, 0.20415020863195954, 0.1662207692441181, 0.4112365938764627, 0.4956017238131897, 0.524979774200449]
 
-    private final int myId;
-
     private double[] explosionWeights = new double[10 * 3];
     private double[] placementWeights = new double[6 * 4];
 
-    public WeightedBot(int id) {
-        this.myId = id;
+    public WeightedBot() {
     }
 
-    public WeightedBot(int id, String inputExplosion, String inputPlacement) {
-        this(id);
+    public WeightedBot(String inputExplosion, String inputPlacement) {
 
         Double[] ed = Arrays.stream(inputExplosion.replace("[","").replace("]","").split(", ")).map(s -> Double.parseDouble(s)).collect(Collectors.toList()).toArray(new Double[0]);
         Double[] pd = Arrays.stream(inputPlacement.replace("[","").replace("]","").split(", ")).map(s -> Double.parseDouble(s)).collect(Collectors.toList()).toArray(new Double[0]);
@@ -60,7 +57,7 @@ public class WeightedBot implements TriatoriumBot {
     }
 
     @Override
-    public ExplosionMove evaluateExplosion(final Board board, final Triangle triangle) {
+    public ExplosionMove evaluateExplosion(final int myId, final Board board, final Triangle triangle) {
 
         List<ExplosionMove> possibleExplosionMoves = board.generateAllExplosionMoves(triangle);
 
@@ -73,8 +70,8 @@ public class WeightedBot implements TriatoriumBot {
             final Triangle t1 = board.get(o1.getLocationHash());
             final Triangle t2 = board.get(o2.getLocationHash());
 
-            double s1 = scoreExplosionMove(o1, board);
-            double s2 = scoreExplosionMove(o2, board);
+            double s1 = scoreExplosionMove(myId, o1, board);
+            double s2 = scoreExplosionMove(myId, o2, board);
 
             if(s1 != s2) {
                 return Double.compare(s1, s2);
@@ -91,7 +88,7 @@ public class WeightedBot implements TriatoriumBot {
     }
 
     @Override
-    public PlacementMove pickMove(final Board board) {
+    public PlacementMove pickMove(final int myId, final Board board) {
         List<PlacementMove> placementMoves = board.generatePlacementMoves(myId);
         if(placementMoves.size() == 0) {
             return null;
@@ -106,8 +103,8 @@ public class WeightedBot implements TriatoriumBot {
                     final Triangle t1 = board.get(o1.getLocationHash());
                     final Triangle t2 = board.get(o2.getLocationHash());
 
-                    double s1 = scorePlacementMove(t1, board);
-                    double s2 = scorePlacementMove(t2, board);
+                    double s1 = scorePlacementMove(myId, t1, board);
+                    double s2 = scorePlacementMove(myId, t2, board);
 
                     if(s1 != s2) {
                         return Double.compare(s1, s2);
@@ -124,20 +121,20 @@ public class WeightedBot implements TriatoriumBot {
         return placementMoves.get(0);
     }
 
-    private double scorePlacementMove(Triangle triangle, Board board) {
+    private double scorePlacementMove(final int myId, Triangle triangle, Board board) {
         double score = 0.0;
 
         //0-5
-        score += placementWeights[tokensAsId(triangle.getTokens())];
+        score += placementWeights[tokensAsId(myId, triangle.getTokens())];
         int offset = 6;
         for(int neightbour : triangle.getNeighbourKeys()) {
-            score += placementWeights[offset + tokensAsId(board.get(neightbour).getTokens())];
+            score += placementWeights[offset + tokensAsId(myId, board.get(neightbour).getTokens())];
             offset += 6;
         }
         return score;
     }
 
-    private double scoreExplosionMove(ExplosionMove move, Board board) {
+    private double scoreExplosionMove(final int myId, ExplosionMove move, Board board) {
 
         double score = 0.0;
 
@@ -149,7 +146,7 @@ public class WeightedBot implements TriatoriumBot {
             List<Integer> tokens = new ArrayList<>(board.get(neightbour).getTokens());
             tokens.add(token);
 
-            score += explosionWeights[offset + tokensAsId(tokens)];
+            score += explosionWeights[offset + tokensAsId(myId, tokens)];
 
             offset += 10;
         }
@@ -157,7 +154,7 @@ public class WeightedBot implements TriatoriumBot {
     }
 
 
-    private int tokensAsId(final List<Integer> tokens) {
+    private int tokensAsId(final int myId, final List<Integer> tokens) {
         int opponents = (int) tokens.stream().filter(o -> o != myId).count();
         int ours = tokens.size() - opponents;
 

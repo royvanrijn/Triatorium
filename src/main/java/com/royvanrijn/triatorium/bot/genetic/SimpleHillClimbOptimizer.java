@@ -1,19 +1,19 @@
-package com.royvanrijn.triatorium;
+package com.royvanrijn.triatorium.bot.genetic;
 
+import com.royvanrijn.triatorium.Triatorium;
 import com.royvanrijn.triatorium.board.Board;
 import com.royvanrijn.triatorium.bot.SmartBot;
 import com.royvanrijn.triatorium.bot.TriatoriumBot;
-import com.royvanrijn.triatorium.bot.WeightedBot;
 
 import java.util.Arrays;
 import java.util.Random;
 
 import static com.royvanrijn.triatorium.Printer.printBoard;
 
-public class Optimizer {
+public class SimpleHillClimbOptimizer {
 
     public static void main(String[] args) {
-        new Optimizer().run();
+        new SimpleHillClimbOptimizer().run();
     }
 
     private void run() {
@@ -25,8 +25,8 @@ public class Optimizer {
         Board board = new Board();
 
         WeightedBot[] bots = new WeightedBot[2];
-        bots[0] = new WeightedBot(0);
-        bots[1] = new WeightedBot(1);
+        bots[0] = new WeightedBot();
+        bots[1] = new WeightedBot();
 
         makeRandom(bots[0]);
         makeRandom(bots[1]);
@@ -81,11 +81,8 @@ public class Optimizer {
     private void testBot(final Board board, final Triatorium triatorium, final WeightedBot winningBot) {
         // Pit against known smart bot:
         TriatoriumBot[] testBots = new TriatoriumBot[2];
-        testBots[0] = new SmartBot(0);
-        testBots[1] = new WeightedBot(1);
-        WeightedBot weightedBot = (WeightedBot) testBots[1];
-
-        copyWeights(winningBot, weightedBot);
+        testBots[0] = new SmartBot();
+        testBots[1] = winningBot;
 
         long w1 = 0;
         long w2 = 0;

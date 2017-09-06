@@ -9,7 +9,7 @@ public interface TriatoriumBot {
 
     String getName();
 
-    PlacementMove pickMove(Board board);
+    PlacementMove pickMove(int playerId, Board board);
 
-    ExplosionMove evaluateExplosion(Board board, Triangle triangle);
+    ExplosionMove evaluateExplosion(int playerId, Board board, Triangle triangle);
 }

@@ -17,7 +17,7 @@ public class Triatorium {
             final TriatoriumBot bot = bots[currentPlayer];
 
             // Bot gets to pick a move using the board:
-            PlacementMove placementMove = bot.pickMove(board);
+            PlacementMove placementMove = bot.pickMove(currentPlayer, board);
 
             if(placementMove == null) {
                 throw new IllegalArgumentException("Player didn't return move while board says it is possible.");
@@ -35,7 +35,7 @@ public class Triatorium {
                  int playerToDistribute = triangle.getTokens().get(2);
 
                  final TriatoriumBot explosionBot = bots[playerToDistribute];
-                 ExplosionMove move = explosionBot.evaluateExplosion(board, triangle);
+                 ExplosionMove move = explosionBot.evaluateExplosion(playerToDistribute, board, triangle);
 
                  board.applyExplosion(playerToDistribute, move);
              }
