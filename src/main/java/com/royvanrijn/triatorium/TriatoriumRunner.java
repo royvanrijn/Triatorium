@@ -1,10 +1,8 @@
 package com.royvanrijn.triatorium;
 
+import com.royvanrijn.triatorium.board.Benchmark;
 import com.royvanrijn.triatorium.board.Board;
 import com.royvanrijn.triatorium.bot.TriatoriumBot;
-import com.royvanrijn.triatorium.bot.genetic.WeightedBot;
-
-import java.util.Arrays;
 
 import static com.royvanrijn.triatorium.Printer.printBoard;
 
@@ -17,58 +15,41 @@ public class TriatoriumRunner {
     private void run() {
         Board board = new Board();
 
+        Benchmark benchmark = new Benchmark();
         TriatoriumBot[] bots = new TriatoriumBot[] {
-                new WeightedBot(
-                        "[0.5722405512748061, 0.5124071226441451, 0.29507949747296325, 0.1770777053572471, 0.22330580470497052, 0.12104378167226293, 0.40332055913699305, 0.7619214085231156, 0.8951617093628434, 0.16035674009405143, 0.6216466288959661, 0.5570372915106497, 0.916090278121759, 0.36880444395736933, 0.24094002700802397, 0.09359814851424642, 0.29090244939128074, 0.18500409343256452, 0.4590285992000944, 0.3011779764762149, 0.6075696715782851, 0.43495869260033926, 0.8177668908899508, 0.32126925277235086, 0.32269554045108184, 0.4597105544775085, 0.3265397592717103, 0.036562518151964096, 0.4080403069855625, 0.9982110952853998]",
-                                "[0.3087204490456974, 0.08175159335289628, 0.27739814104112126, 0.272618589621086, 0.889425938176175, 0.9484135353673117, 0.22125782927941007, 0.9955635249251288, 0.21275253972610841, 0.3346809013682924, 0.5686962126582489, 0.6927225441589939, 0.3058769769705303, 0.9833178667994127, 0.08807493266833133, 0.09590589485383405, 0.6138820419744868, 0.4669482875724832, 0.5923641617896693, 0.8980886667042994, 0.06604097046153823, 0.09933243669469527, 0.19457403666901696, 0.6472585053800222]"
-                ),
-                new WeightedBot(
-                        "[0.8369505487315533, 0.8215734801222394, 0.48389412901822737, 0.7784907114292889, 0.3674979801958925, 0.4730035676741339, 0.8333741814499732, 0.7717897550585603, 0.8530578681550486, 0.11343951759750259, 0.6901631152211555, 0.6480604144020209, 0.8747911159045372, 0.6236316938830687, 0.12603385399193556, 0.47169546873625257, 0.7488934168601097, 0.5622762669328066, 0.39566140295628727, 0.660861172228261, 0.28429115917667025, 0.3095505721404095, 0.7224891862360815, 0.0013573860682100092, 0.19437809177237442, 0.2295930626888495, 0.40199212716284793, 0.4682010622885058, 0.7141840694617556, 0.8129026683483398]",
-                                "[0.6623589486107595, 0.044483858652637376, 0.46478059680922246, 0.3814942969580467, 0.9225361893387662, 0.8891995439226574, 0.6763694193970774, 0.748998148839426, 0.07150972099131558, 0.5126278794980866, 0.6864663815028196, 0.8720989475996557, 0.3167876712112553, 0.6761348711573518, 0.027146697630442307, 0.39708493196198635, 0.5405861906518392, 0.7091803663590369, 0.34602366681889607, 0.5397961854740735, 0.15084868713366173, 0.3518407884760898, 0.5367781720556202, 0.26956528642035615]"
-                )
+                benchmark.getBenchmark().get(4),
+                benchmark.getBenchmark().get(0),
         };
 
         Triatorium triatorium = new Triatorium(false);
 
-        long before = System.currentTimeMillis();
-        for(int i = 0; i<1000;i++) {
-            fight(board, triatorium, bots, (i % 2));
+        /*long before = System.currentTimeMillis();
+        for(int i = 0; i<500;i++) {
+            fight(board, triatorium, (i % 2), benchmark.getBenchmark().get(4), benchmark.getBenchmark().get(0));
             board.reset();
-        }
+            fight(board, triatorium, (i % 2), benchmark.getBenchmark().get(0), benchmark.getBenchmark().get(4));
+            board.reset();
+        }*/
 
-        System.out.println("Took: " + (System.currentTimeMillis() - before));
+        //System.out.println("Took: " + (System.currentTimeMillis() - before));
 
-        fight(board, new Triatorium(true), bots, 0);
+        fight(board, new Triatorium(true), 0, benchmark.getBenchmark().get(0), benchmark.getBenchmark().get(4));
+        fight(board, new Triatorium(true), 0, benchmark.getBenchmark().get(4), benchmark.getBenchmark().get(0));
 
     }
 
-    long w1 = 0;
-    long w2 = 0;
-    long t = 0;
-    long p1 = 0;
-    long p2 = 0;
-
-    public void fight(Board board, Triatorium triatorium, TriatoriumBot[] bots, int startWith) {
+    public void fight(Board board, Triatorium triatorium, int startWith, TriatoriumBot... bots) {
 
         triatorium.playGameWithBots(board, startWith, bots);
 
         int[] scores = board.calculateScore();
-        p1 += scores[0];
-        p2 += scores[1];
 
-        if(scores[0] > scores[1]) {
-            w1++;
-        } else if(scores[1] > scores[0]) {
-            w2++;
-        } else {
-            t++;
-        }
-
-        //[0, 0] 10052 : 10928 | 2257 : 3437 : 4306 (10000)
-
-        System.out.println(Arrays.toString(scores)+" "+p1+" : "+p2+" | "+w1+" : "+w2 + " : "+t + " ("+(w1+w2+t)+")");
+        System.out.println(bots[0].getName() + ": " + scores[0]);
+        System.out.println(bots[1].getName() + ": " + scores[1]);
 
         printBoard(board);
+
+        board.reset();
 
     }
 }

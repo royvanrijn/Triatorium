@@ -14,14 +14,14 @@ import java.util.Random;
 
 import static com.royvanrijn.triatorium.Printer.printBoard;
 
-public class GAOptimizer {
+public class WeightedGAOptimizer {
 
     public static void main(String[] args) {
-        new GAOptimizer().run();
+        new WeightedGAOptimizer().run();
     }
 
-    private static final int POOL_SIZE = 60;
-    private static final int GAMES_PER_ROUND = 40;
+    private static final int POOL_SIZE = 20;
+    private static final int GAMES_PER_ROUND = 20;
 
     private List<BotHolder> botPool = new ArrayList<>();
 
@@ -32,7 +32,7 @@ public class GAOptimizer {
 
         // Fill with random bots:
         for(int i = 0; i < POOL_SIZE; i++) {
-            WeightedWithLocationBot bot = new WeightedWithLocationBot();
+            WeightedBot bot = new WeightedBot("WeightedBot#"+i);
             makeRandom(bot);
             botPool.add(new BotHolder(bot));
         }
@@ -55,16 +55,24 @@ public class GAOptimizer {
 
             for(TriatoriumBot bot : benchmark.getBenchmark()) {
 
-                for(int i = 0; i < GAMES_PER_ROUND; i++) {
+                for(int i = 0; i < GAMES_PER_ROUND/2; i++) {
                     triatorium.playGameWithBots(board, i % 2, b1.bot, bot);
                     int[] scores = board.calculateScore();
 
-                    b1.incrFitness(scores[0] - scores[1]); // or just own score?
+                    b1.incrFitness(scores[0] - scores[1]);
+
+                    board.reset();
+
+                    // Also play the other way around to avoid fitting to one play direction (!):
+                    triatorium.playGameWithBots(board, i % 2, bot, b1.bot);
+                    scores = board.calculateScore();
+
+                    b1.incrFitness(scores[1] - scores[0]);
 
                     board.reset();
                 }
             }
-            System.out.println("Bot " + x + " scored " + b1.fitness);
+            System.out.println(b1.bot.getName() + " scored " + b1.fitness);
         }
 
         Collections.sort(botPool);
@@ -74,7 +82,7 @@ public class GAOptimizer {
 
         // The bottom half gets filled with top half mutated:
         for(int i = POOL_SIZE/2; i < POOL_SIZE; i++) {
-            WeightedWithLocationBot weightedBot = botPool.get(i).bot;
+            WeightedBot weightedBot = botPool.get(i).bot;
 
             copyWeights(botPool.get(i - POOL_SIZE/2).bot, weightedBot);
             for(int f = 0; f<1 + random.nextInt(10); f++) {
@@ -86,16 +94,15 @@ public class GAOptimizer {
         testBot(board, triatorium, botPool.get(0).bot);
         System.out.println(Arrays.toString(botPool.get(0).bot.getExplosionWeights()));
         System.out.println(Arrays.toString(botPool.get(0).bot.getPlacementWeights()));
-        System.out.println(Arrays.toString(botPool.get(0).bot.getLocationWeights()));
 
     }
 
     private class BotHolder implements Comparable<BotHolder> {
 
         private long fitness = 0;
-        private WeightedWithLocationBot bot;
+        private WeightedBot bot;
 
-        BotHolder(WeightedWithLocationBot bot) {
+        BotHolder(WeightedBot bot) {
             this.bot = bot;
         }
 
@@ -114,18 +121,10 @@ public class GAOptimizer {
         }
     }
 
-    private void copyWeights(final WeightedBot from, final WeightedBot to) {
-        for(int i = 0; i < to.getExplosionWeights().length; i++) {
-            to.getExplosionWeights()[i] = from.getExplosionWeights()[i];
-        }
-        for(int i = 0; i < to.getPlacementWeights().length; i++) {
-            to.getPlacementWeights()[i] = from.getPlacementWeights()[i];
-        }
-    }
 
     private SmartBot smartBot = new SmartBot();
 
-    private void testBot(final Board board, final Triatorium triatorium, final WeightedWithLocationBot winningBot) {
+    private void testBot(final Board board, final Triatorium triatorium, final WeightedBot winningBot) {
         // Pit against known smart bot:
         long w1 = 0;
         long w2 = 0;
@@ -154,42 +153,33 @@ public class GAOptimizer {
         System.out.println(p1+" : "+p2+" | "+w1+" : "+w2 + " : "+t + " ("+(w1+w2+t)+")");
     }
 
-    private void copyWeights(final WeightedWithLocationBot from, final WeightedWithLocationBot to) {
+    private void copyWeights(final WeightedBot from, final WeightedBot to) {
         for(int i = 0; i < to.getExplosionWeights().length; i++) {
             to.getExplosionWeights()[i] = from.getExplosionWeights()[i];
         }
         for(int i = 0; i < to.getPlacementWeights().length; i++) {
             to.getPlacementWeights()[i] = from.getPlacementWeights()[i];
         }
-        for(int i = 0; i < to.getLocationWeights().length; i++) {
-            to.getLocationWeights()[i] = from.getLocationWeights()[i];
-        }
     }
 
     private final Random random = new Random();
 
-    private void makeRandom(WeightedWithLocationBot bot) {
+    private void makeRandom(WeightedBot bot) {
         for(int i = 0; i < bot.getExplosionWeights().length; i++) {
             bot.getExplosionWeights()[i] = random.nextDouble();
         }
         for(int i = 0; i < bot.getPlacementWeights().length; i++) {
             bot.getPlacementWeights()[i] = random.nextDouble();
         }
-        for(int i = 0; i < bot.getLocationWeights().length; i++) {
-            bot.getLocationWeights()[i] = random.nextDouble();
-        }
     }
 
-    private void updateRandomField(final WeightedWithLocationBot losingBot) {
-        switch(random.nextInt(3)) {
+    private void updateRandomField(final WeightedBot losingBot) {
+        switch(random.nextInt(2)) {
             case 0:
                 losingBot.getExplosionWeights()[random.nextInt(losingBot.getExplosionWeights().length)] = random.nextDouble();
                 return;
             case 1:
                 losingBot.getPlacementWeights()[random.nextInt(losingBot.getPlacementWeights().length)] = random.nextDouble();
-                return;
-            case 2:
-                losingBot.getLocationWeights()[random.nextInt(losingBot.getLocationWeights().length)] = random.nextDouble();
                 return;
         }
     }

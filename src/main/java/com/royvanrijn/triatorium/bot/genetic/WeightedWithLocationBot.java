@@ -58,7 +58,7 @@ public class WeightedWithLocationBot implements TriatoriumBot {
 
     @Override
     public String getName() {
-        return "WeightedBot";
+        return "WeightedBotWithLocation";
     }
 
     @Override
@@ -81,12 +81,8 @@ public class WeightedWithLocationBot implements TriatoriumBot {
             if(s1 != s2) {
                 return Double.compare(s1, s2);
             }
-
-            // If the score is equal, pick the one closest to the center:
-            int x1 = CoordinateHash.getX(t1.getLocationHash());
-            int x2 = CoordinateHash.getX(t2.getLocationHash());
-
-            return myId == 1 ? (x1 - x2) : -(x1 - x2);
+            // Consider equal?
+            return 0;
         });
 
         return possibleExplosionMoves.get(0);

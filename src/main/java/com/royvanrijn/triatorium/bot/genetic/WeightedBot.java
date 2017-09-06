@@ -21,13 +21,17 @@ import java.util.stream.Collectors;
  */
 public class WeightedBot implements TriatoriumBot {
 
+    private String name;
+
     private double[] explosionWeights = new double[10 * 3];
     private double[] placementWeights = new double[6 * 4];
 
-    public WeightedBot() {
+    public WeightedBot(String name) {
+        this.name = name;
     }
 
-    public WeightedBot(String inputExplosion, String inputPlacement) {
+    public WeightedBot(String name, String inputExplosion, String inputPlacement) {
+        this(name);
 
         Double[] ed = Arrays.stream(inputExplosion.replace("[","").replace("]","").split(", ")).map(s -> Double.parseDouble(s)).collect(Collectors.toList()).toArray(new Double[0]);
         Double[] pd = Arrays.stream(inputPlacement.replace("[","").replace("]","").split(", ")).map(s -> Double.parseDouble(s)).collect(Collectors.toList()).toArray(new Double[0]);
@@ -49,7 +53,7 @@ public class WeightedBot implements TriatoriumBot {
 
     @Override
     public String getName() {
-        return "WeightedBot";
+        return name;
     }
 
     @Override
